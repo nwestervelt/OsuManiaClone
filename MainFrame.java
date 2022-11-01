@@ -9,7 +9,7 @@ public class MainFrame extends JFrame
         //call super constructor and set this frame's title
         super("Osu Mania Clone");
 
-        //create the HightwayPanel
+        //create the HighwayPanel
         HighwayPanel highwayPanel = new HighwayPanel();
         add(highwayPanel);
 
