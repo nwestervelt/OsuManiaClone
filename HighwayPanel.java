@@ -3,6 +3,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.io.*;
+import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.imageio.*;
 
@@ -82,13 +83,21 @@ public class HighwayPanel extends JPanel
         public void keyPressed(KeyEvent ke)
         {
             if(ke.getKeyCode() == KeyEvent.VK_D)
+            {
                 keysPressed[0] = true;
+            }
             if(ke.getKeyCode() == KeyEvent.VK_F)
+            {
                 keysPressed[1] = true;
+            }
             if(ke.getKeyCode() == KeyEvent.VK_J)
+            {
                 keysPressed[2] = true;
+            }
             if(ke.getKeyCode() == KeyEvent.VK_K)
+            {
                 keysPressed[3] = true;
+            }
         }
         public void keyReleased(KeyEvent ke)
         {
@@ -110,7 +119,7 @@ public class HighwayPanel extends JPanel
             {
                 while(true)
                 {
-                    sleep(12);
+                    sleep(8);
                     repaint();
                     toolkit.sync();
                 }
