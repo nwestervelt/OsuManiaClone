@@ -10,6 +10,7 @@ import javax.imageio.*;
 public class HighwayPanel extends JPanel
 {
     private Toolkit toolkit;
+    private boolean playing;
     private boolean[] keysPressed;
     private BufferedImage[] keys, noteImages;
 
@@ -17,6 +18,9 @@ public class HighwayPanel extends JPanel
     {
         //get the toolkit for making animation smoother
         toolkit = getToolkit();
+
+        //initialize playing variable
+        playing = false;
 
         //instantiate pressed state of keys
         keysPressed = new boolean[]{false, false, false, false};
@@ -59,9 +63,11 @@ public class HighwayPanel extends JPanel
     }
     public void paintComponent(Graphics g)
     {
+        //draw black background of highway
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, 1080, 720);
 
+        //draw vertical lines on highway
         g.setColor(Color.LIGHT_GRAY);
         g.drawLine(100, 0, 100, 720);
         g.drawLine(200, 0, 200, 720);
@@ -69,6 +75,7 @@ public class HighwayPanel extends JPanel
         g.drawLine(400, 0, 400, 720);
         g.drawLine(500, 0, 500, 720);
 
+        //draw images associated with pressed keys
         if(keysPressed[0])
             g.drawImage(keys[0], 100, 520, null);
         if(keysPressed[1])
@@ -82,25 +89,27 @@ public class HighwayPanel extends JPanel
     {
         public void keyPressed(KeyEvent ke)
         {
-            if(ke.getKeyCode() == KeyEvent.VK_D)
-            {
+            //update status of pressed keys
+            if(ke.getKeyCode() == KeyEvent.VK_D && !keysPressed[0])
                 keysPressed[0] = true;
-            }
-            if(ke.getKeyCode() == KeyEvent.VK_F)
-            {
+            if(ke.getKeyCode() == KeyEvent.VK_F && !keysPressed[1])
                 keysPressed[1] = true;
-            }
-            if(ke.getKeyCode() == KeyEvent.VK_J)
-            {
+            if(ke.getKeyCode() == KeyEvent.VK_J && !keysPressed[2])
                 keysPressed[2] = true;
-            }
-            if(ke.getKeyCode() == KeyEvent.VK_K)
-            {
+            if(ke.getKeyCode() == KeyEvent.VK_K && !keysPressed[3])
                 keysPressed[3] = true;
+
+            //start playing the song after space is pressed
+            if(ke.getKeyCode() == KeyEvent.VK_SPACE && !playing)
+            {
+                SongThread st = new SongThread();
+                st.start();
+                playing = true;
             }
         }
         public void keyReleased(KeyEvent ke)
         {
+            //set status of key pressed to false when released
             if(ke.getKeyCode() == KeyEvent.VK_D)
                 keysPressed[0] = false;
             if(ke.getKeyCode() == KeyEvent.VK_F)
@@ -125,6 +134,26 @@ public class HighwayPanel extends JPanel
                 }
             }
             catch(InterruptedException ie){}
+        }
+    }
+    private class SongThread extends Thread
+    {
+        private Clip hitSound;
+
+        public void run()
+        {
+            try
+            {
+                hitSound = AudioSystem.getClip();
+                AudioInputStream ais = AudioSystem.getAudioInputStream(new File("pathToSongFile"));
+                hitSound.open(ais);
+                hitSound.start();
+            }
+            catch(Exception e)
+            {
+                System.out.println(e);
+                System.exit(1);
+            }
         }
     }
 }
