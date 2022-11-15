@@ -3,6 +3,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.io.*;
+import java.util.*;
 import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.imageio.*;
@@ -13,6 +14,9 @@ public class HighwayPanel extends JPanel
     private boolean playing;
     private boolean[] keysPressed;
     private BufferedImage[] keys, noteImages;
+    private ArrayList<Note> activeNotes;
+    private Note currentNote;
+    private int noteX, noteY;
 
     public HighwayPanel()
     {
@@ -24,6 +28,13 @@ public class HighwayPanel extends JPanel
 
         //instantiate pressed state of keys
         keysPressed = new boolean[]{false, false, false, false};
+
+        //instantiate arraylist of active notes
+        activeNotes = new ArrayList<Note>();
+        activeNotes.add(new Note(0));
+        activeNotes.add(new Note(1));
+        activeNotes.add(new Note(2));
+        activeNotes.add(new Note(3));
 
         //stores key images
         keys = new BufferedImage[4];
@@ -75,6 +86,24 @@ public class HighwayPanel extends JPanel
         g.drawLine(400, 0, 400, 720);
         g.drawLine(500, 0, 500, 720);
 
+        //draw active notes
+        for(int i = 0; i < activeNotes.size(); i++)
+        {
+            currentNote = activeNotes.get(i);
+            noteY = currentNote.getY() + 5;
+            noteX = currentNote.getX();
+
+            if(noteX == 100 || noteX == 400)
+                g.drawImage(noteImages[0], noteX, noteY, null);
+            else if(noteX == 200 || noteX == 300)
+                g.drawImage(noteImages[1], noteX, noteY, null);
+
+            currentNote.setY(noteY);
+
+            if(noteY == 800)
+                activeNotes.remove(i);
+        }
+
         //draw images associated with pressed keys
         if(keysPressed[0])
             g.drawImage(keys[0], 100, 520, null);
@@ -84,6 +113,28 @@ public class HighwayPanel extends JPanel
             g.drawImage(keys[2], 300, 520, null);
         if(keysPressed[3])
             g.drawImage(keys[3], 400, 520, null);
+    }
+    private class Note
+    {
+        private int x, y;
+
+        public Note(int column)
+        {
+            x = (column * 100) + 100;
+            y = -600;
+        }
+        public int getX()
+        {
+            return x;
+        }
+        public void setY(int y)
+        {
+            this.y = y;
+        }
+        public int getY()
+        {
+            return y;
+        }
     }
     private class KeyHandler extends KeyAdapter
     {
