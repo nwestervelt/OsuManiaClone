@@ -20,6 +20,7 @@ public class MainFrame extends JFrame
         //set the appearance and behavior of this frame
         pack();
         setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setResizable(false);
         setVisible(true);
     }
     public static void main(String[] args)
