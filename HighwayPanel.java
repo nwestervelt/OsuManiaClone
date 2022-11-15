@@ -68,7 +68,7 @@ public class HighwayPanel extends JPanel
         animThread.start();
 
         //set this panel's appearance
-        setPreferredSize(new Dimension(1080, 720));
+        setPreferredSize(new Dimension(600, 720));
         setFocusable(true);
         requestFocus();
     }
@@ -76,7 +76,7 @@ public class HighwayPanel extends JPanel
     {
         //draw black background of highway
         g.setColor(Color.BLACK);
-        g.fillRect(0, 0, 1080, 720);
+        g.fillRect(0, 0, 600, 720);
 
         //draw vertical lines on highway
         g.setColor(Color.LIGHT_GRAY);
