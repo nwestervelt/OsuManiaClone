@@ -87,7 +87,7 @@ public class HighwayPanel extends JPanel
         g.drawLine(500, 0, 500, 720);
 
         //draw active notes
-        for(int i = 0; i < activeNotes.size(); i++)
+        for(int i = activeNotes.size() - 1; i > -1; i--)
         {
             currentNote = activeNotes.get(i);
             noteY = currentNote.getY() + 5;
