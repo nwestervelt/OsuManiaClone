@@ -10,13 +10,16 @@ import javax.imageio.*;
 
 public class HighwayPanel extends JPanel
 {
+    private NoteReadingThread noteThread;
+    private AnimationThread animThread;
+    private SongThread songThread;
+    private volatile ArrayList<Note> activeNotes;
+    private Note currentNote;
+    private int noteX, noteY;
+    private BufferedImage[] keys, noteImages;
     private Toolkit toolkit;
     private boolean playing;
     private boolean[] keysPressed;
-    private BufferedImage[] keys, noteImages;
-    private ArrayList<Note> activeNotes;
-    private Note currentNote;
-    private int noteX, noteY;
 
     public HighwayPanel()
     {
@@ -31,10 +34,6 @@ public class HighwayPanel extends JPanel
 
         //instantiate arraylist of active notes
         activeNotes = new ArrayList<Note>();
-        activeNotes.add(new Note(0));
-        activeNotes.add(new Note(1));
-        activeNotes.add(new Note(2));
-        activeNotes.add(new Note(3));
 
         //stores key images
         keys = new BufferedImage[4];
@@ -63,9 +62,10 @@ public class HighwayPanel extends JPanel
         //add listener for the keys
         addKeyListener(new KeyHandler());
 
-        //create and start the animation thread
-        AnimationThread animThread = new AnimationThread();
-        animThread.start();
+        //create the threads for reading notes, the song, and the animation
+        noteThread = new NoteReadingThread();
+        songThread = new SongThread();
+        animThread = new AnimationThread();
 
         //set this panel's appearance
         setPreferredSize(new Dimension(600, 720));
@@ -93,17 +93,58 @@ public class HighwayPanel extends JPanel
             noteY = currentNote.getY() + 5;
             noteX = currentNote.getX();
 
+            //draw notes in outside columns
             if(noteX == 100 || noteX == 400)
+            {
                 g.drawImage(noteImages[0], noteX, noteY, null);
+
+                //if is a long note, draw it's body
+                if(currentNote.isLong())
+                {
+                    int length = currentNote.getLength();
+
+                    for(int j = 1; j <= length; j++)
+                    {
+                        //if at end of long note, draw another regular note as a tail
+                        if(j == length)
+                            g.drawImage(noteImages[1], noteX, noteY - (j * 50), null);
+                        else
+                            g.drawImage(noteImages[0], noteX, noteY - (j * 50), null);
+                    }
+                }
+            }
+            //draw notes in inside columns
             else if(noteX == 200 || noteX == 300)
+            {
                 g.drawImage(noteImages[1], noteX, noteY, null);
 
+                //if is a long note, draw it's body
+                if(currentNote.isLong())
+                {
+                    int length = currentNote.getLength();
+
+                    for(int j = 1; j <= length; j++)
+                    {
+                        //if at end of long note, draw another regular note as a tail
+                        if(j == length)
+                            g.drawImage(noteImages[1], noteX, noteY - (j * 50), null);
+                        else
+                            g.drawImage(noteImages[2], noteX, noteY - (j * 50), null);
+                    }
+                }
+            }
+
+            //update y position of note
             currentNote.setY(noteY);
 
-            if(noteY == 800)
+            //remove regular note if it's offscreen
+            if(noteY == 800 && !currentNote.isLong())
+                activeNotes.remove(i);
+
+            //remove long note if it's tail is offscreen
+            else if(currentNote.isLong() && noteY - (currentNote.getLength() * 50) == 800)
                 activeNotes.remove(i);
         }
-
         //draw images associated with pressed keys
         if(keysPressed[0])
             g.drawImage(keys[0], 100, 520, null);
@@ -113,28 +154,6 @@ public class HighwayPanel extends JPanel
             g.drawImage(keys[2], 300, 520, null);
         if(keysPressed[3])
             g.drawImage(keys[3], 400, 520, null);
-    }
-    private class Note
-    {
-        private int x, y;
-
-        public Note(int column)
-        {
-            x = (column * 100) + 100;
-            y = -600;
-        }
-        public int getX()
-        {
-            return x;
-        }
-        public void setY(int y)
-        {
-            this.y = y;
-        }
-        public int getY()
-        {
-            return y;
-        }
     }
     private class KeyHandler extends KeyAdapter
     {
@@ -150,11 +169,12 @@ public class HighwayPanel extends JPanel
             if(ke.getKeyCode() == KeyEvent.VK_K && !keysPressed[3])
                 keysPressed[3] = true;
 
-            //start playing the song after space is pressed
+            //if space is pressed, start the game and it's threads
             if(ke.getKeyCode() == KeyEvent.VK_SPACE && !playing)
             {
-                SongThread st = new SongThread();
-                st.start();
+                noteThread.start();
+                //songThread.start();
+                animThread.start();
                 playing = true;
             }
         }
@@ -169,6 +189,44 @@ public class HighwayPanel extends JPanel
                 keysPressed[2] = false;
             if(ke.getKeyCode() == KeyEvent.VK_K)
                 keysPressed[3] = false;
+        }
+    }
+    private class Note
+    {
+        private int x, y, length;
+        private boolean isLong;
+
+        public Note(int column, boolean isLong, int length)
+        {
+            x = (column * 100) + 100;
+            y = -600;
+            this.length = length;
+            this.isLong = isLong;
+        }
+        //get the raw x coordinate of the note
+        public int getX()
+        {
+            return x;
+        }
+        //set the raw y coordinate of the note
+        public void setY(int y)
+        {
+            this.y = y;
+        }
+        //get the raw y coordinate of the note
+        public int getY()
+        {
+            return y;
+        }
+        //get the length of the note
+        public int getLength()
+        {
+            return length;
+        }
+        //return if this is a long note
+        public boolean isLong()
+        {
+            return isLong;
         }
     }
     private class AnimationThread extends Thread
@@ -187,18 +245,75 @@ public class HighwayPanel extends JPanel
             catch(InterruptedException ie){}
         }
     }
+    private class NoteReadingThread extends Thread
+    {
+        private int noteTime, noteColumn, noteLength;
+        private boolean noteLong;
+        private Scanner noteFile;
+        private long startTime;
+
+        public NoteReadingThread()
+        {
+            //open the note file
+            try
+            {
+                noteFile = new Scanner(new File("noteFile.txt"));
+            }
+            catch(FileNotFoundException fnfe)
+            {
+                System.out.println(fnfe);
+                System.exit(1);
+            }
+        }
+
+        public void run()
+        {
+            //set the starting time
+            startTime = System.currentTimeMillis();
+
+            //priming read of note information
+            noteTime = noteFile.nextInt();
+            noteColumn = noteFile.nextInt();
+            noteLong = noteFile.nextBoolean();
+            noteLength = noteFile.nextInt();
+
+            while(true)
+            {
+                //when note's time is reached, add it
+                if(System.currentTimeMillis() - startTime == noteTime)
+                {
+                    //add note to active notes
+                    activeNotes.add(new Note(noteColumn, noteLong, noteLength));
+
+                    //stop reading when end of file is reached
+                    if(!noteFile.hasNext()) break;
+
+                    //read next note information
+                    noteTime = noteFile.nextInt();
+                    noteColumn = noteFile.nextInt();
+                    noteLong = noteFile.nextBoolean();
+                    noteLength = noteFile.nextInt();
+                }
+            }
+        }
+    }
     private class SongThread extends Thread
     {
-        private Clip hitSound;
+        private Clip song;
 
         public void run()
         {
             try
             {
-                hitSound = AudioSystem.getClip();
+                //get clip to play audio from
+                song = AudioSystem.getClip();
+
+                //create the stream to play the audio from
                 AudioInputStream ais = AudioSystem.getAudioInputStream(new File("pathToSongFile"));
-                hitSound.open(ais);
-                hitSound.start();
+                song.open(ais);
+
+                //start playing the audio
+                song.start();
             }
             catch(Exception e)
             {
