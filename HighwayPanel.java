@@ -13,7 +13,7 @@ public class HighwayPanel extends JPanel
     private NoteReadingThread noteThread;
     private AnimationThread animThread;
     private SongThread songThread;
-    private volatile ArrayList<Note> activeNotes;
+    private ArrayList<Note> activeNotes;
     private Note currentNote;
     private int noteX, noteY;
     private BufferedImage[] keys, noteImages;
@@ -76,21 +76,26 @@ public class HighwayPanel extends JPanel
     {
         //draw black background of highway
         g.setColor(Color.BLACK);
-        g.fillRect(0, 0, 600, 720);
+        g.fillRect(0, 0, 600, 980);
+
+        //draw gray border on highway
+        g.setColor(Color.LIGHT_GRAY);
+        g.fillRect(0, 0, 100, 980);
+        g.fillRect(500, 0, 500, 980);
 
         //draw vertical lines on highway
-        g.setColor(Color.LIGHT_GRAY);
-        g.drawLine(100, 0, 100, 720);
-        g.drawLine(200, 0, 200, 720);
-        g.drawLine(300, 0, 300, 720);
-        g.drawLine(400, 0, 400, 720);
-        g.drawLine(500, 0, 500, 720);
+        g.drawLine(200, 0, 200, 980);
+        g.drawLine(300, 0, 300, 980);
+        g.drawLine(400, 0, 400, 980);
+
+        //draw judgement line
+        g.drawLine(100, 930, 500, 930);
 
         //draw active notes
         for(int i = activeNotes.size() - 1; i > -1; i--)
         {
             currentNote = activeNotes.get(i);
-            noteY = currentNote.getY() + 5;
+            noteY = currentNote.getY() + 15;
             noteX = currentNote.getX();
 
             //draw notes in outside columns
@@ -107,9 +112,9 @@ public class HighwayPanel extends JPanel
                     {
                         //if at end of long note, draw another regular note as a tail
                         if(j == length)
-                            g.drawImage(noteImages[1], noteX, noteY - (j * 50), null);
-                        else
                             g.drawImage(noteImages[0], noteX, noteY - (j * 50), null);
+                        else
+                            g.drawImage(noteImages[2], noteX, noteY - (j * 50), null);
                     }
                 }
             }
@@ -138,22 +143,22 @@ public class HighwayPanel extends JPanel
             currentNote.setY(noteY);
 
             //remove regular note if it's offscreen
-            if(noteY == 800 && !currentNote.isLong())
+            if(noteY > 1100 && !currentNote.isLong())
                 activeNotes.remove(i);
 
             //remove long note if it's tail is offscreen
-            else if(currentNote.isLong() && noteY - (currentNote.getLength() * 50) == 800)
+            else if(currentNote.isLong() && noteY - (currentNote.getLength() * 50) > 1100)
                 activeNotes.remove(i);
         }
         //draw images associated with pressed keys
         if(keysPressed[0])
-            g.drawImage(keys[0], 100, 520, null);
+            g.drawImage(keys[0], 100, 780, null);
         if(keysPressed[1])
-            g.drawImage(keys[1], 200, 520, null);
+            g.drawImage(keys[1], 200, 780, null);
         if(keysPressed[2])
-            g.drawImage(keys[2], 300, 520, null);
+            g.drawImage(keys[2], 300, 780, null);
         if(keysPressed[3])
-            g.drawImage(keys[3], 400, 520, null);
+            g.drawImage(keys[3], 400, 780, null);
     }
     private class KeyHandler extends KeyAdapter
     {

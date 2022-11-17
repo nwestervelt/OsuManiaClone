@@ -7,8 +7,8 @@ public class ScorePanel extends JPanel
     public ScorePanel()
     {
         //set this panel's appearance
-        setPreferredSize(new Dimension(200, 720));
+        setPreferredSize(new Dimension(200, 980));
         setFocusable(false);
-        setBackground(Color.LIGHT_GRAY);
+        setBackground(Color.BLACK);
     }
 }
