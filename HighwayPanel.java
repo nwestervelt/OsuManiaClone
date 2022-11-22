@@ -10,20 +10,23 @@ import javax.imageio.*;
 
 public class HighwayPanel extends JPanel
 {
+    private MainFrame parent;
     private NoteReadingThread noteThread;
     private AnimationThread animThread;
     private SongThread songThread;
     private ArrayList<Note> activeNotes;
     private Note currentNote;
-    private int noteX, noteY;
+    private int noteX, noteY, hitCount, score, accuracy;
     private long noteCreationTime;
     private BufferedImage[] keys, noteImages;
     private Toolkit toolkit;
     private boolean playing;
     private Object[][] keysPressed;
 
-    public HighwayPanel()
+    public HighwayPanel(MainFrame parent)
     {
+        this.parent = parent;
+
         //get the toolkit for making animation smoother
         toolkit = getToolkit();
 
@@ -151,10 +154,15 @@ public class HighwayPanel extends JPanel
             for(int j = 0; j < keysPressed.length; j++)
             {
                 if((boolean)keysPressed[j][0] && noteX == j * 100 + 100 &&
-                    ((long)keysPressed[j][1] - noteCreationTime <= 816 + 80 ||
+                    ((long)keysPressed[j][1] - noteCreationTime <= 816 + 80 &&
                     (long)keysPressed[j][1] - noteCreationTime >= 816 - 80))
                 {
-                    System.out.println("hit");
+                    if(!currentNote.isHit())
+                    {
+                        currentNote.hit();
+                        score += 50;
+                        parent.updateScore(score);
+                    }
                 }
             }
 
@@ -183,23 +191,8 @@ public class HighwayPanel extends JPanel
     {
         public void keyPressed(KeyEvent ke)
         {
-            //update status of pressed keys
-            if(ke.getKeyCode() == KeyEvent.VK_D && !(boolean)keysPressed[0][0])
-            {
-                keysPressed[0][0] = true;
-            }
-            if(ke.getKeyCode() == KeyEvent.VK_F && !(boolean)keysPressed[1][0])
-            {
-                keysPressed[1][0] = true;
-            }
-            if(ke.getKeyCode() == KeyEvent.VK_J && !(boolean)keysPressed[2][0])
-            {
-                keysPressed[2][0] = true;
-            }
-            if(ke.getKeyCode() == KeyEvent.VK_K && !(boolean)keysPressed[3][0])
-            {
-                keysPressed[3][0] = true;
-            }
+            //update state of keys
+            setKeyState(ke, true);
 
             //if space is pressed, start the game and it's threads
             if(ke.getKeyCode() == KeyEvent.VK_SPACE && !playing)
@@ -212,22 +205,42 @@ public class HighwayPanel extends JPanel
         }
         public void keyReleased(KeyEvent ke)
         {
-            //set status of key pressed to false when released
-            if(ke.getKeyCode() == KeyEvent.VK_D)
-                keysPressed[0][0] = false;
-            if(ke.getKeyCode() == KeyEvent.VK_F)
-                keysPressed[1][0] = false;
-            if(ke.getKeyCode() == KeyEvent.VK_J)
-                keysPressed[2][0] = false;
-            if(ke.getKeyCode() == KeyEvent.VK_K)
-                keysPressed[3][0] = false;
+            //update state of keys
+            setKeyState(ke, false);
+        }
+        private void setKeyState(KeyEvent ke, boolean pressed)
+        {
+            if(ke.getKeyCode() == KeyEvent.VK_D && !(boolean)keysPressed[0][0] ||
+                !pressed)
+            {
+                keysPressed[0][0] = pressed;
+                keysPressed[0][1] = System.currentTimeMillis();
+            }
+            if(ke.getKeyCode() == KeyEvent.VK_F && !(boolean)keysPressed[1][0] ||
+                !pressed)
+            {
+                keysPressed[1][0] = pressed;
+                keysPressed[1][1] = System.currentTimeMillis();
+            }
+            if(ke.getKeyCode() == KeyEvent.VK_J && !(boolean)keysPressed[2][0] ||
+                !pressed)
+            {
+                keysPressed[2][0] = pressed;
+                keysPressed[2][1] = System.currentTimeMillis();
+            }
+            if(ke.getKeyCode() == KeyEvent.VK_K && !(boolean)keysPressed[3][0] ||
+                !pressed)
+            {
+                keysPressed[3][0] = pressed;
+                keysPressed[3][1] = System.currentTimeMillis();
+            }
         }
     }
     private class Note
     {
         private int x, y, length;
         private long creationTime;
-        private boolean isLong;
+        private boolean isLong, isHit;
 
         public Note(int column, boolean isLong, int length)
         {
@@ -236,6 +249,7 @@ public class HighwayPanel extends JPanel
             this.length = length;
             this.isLong = isLong;
             creationTime = System.currentTimeMillis();
+            isHit = false;
         }
         //get the raw x coordinate of the note
         public int getX()
@@ -257,6 +271,7 @@ public class HighwayPanel extends JPanel
         {
             return length;
         }
+        //return the time this note was created
         public long getCreationTime()
         {
             return creationTime;
@@ -265,6 +280,16 @@ public class HighwayPanel extends JPanel
         public boolean isLong()
         {
             return isLong;
+        }
+        //set state of note being hit
+        public void hit()
+        {
+            isHit = true;
+        }
+        //return if this note has been hit
+        public boolean isHit()
+        {
+            return isHit;
         }
     }
     private class AnimationThread extends Thread
