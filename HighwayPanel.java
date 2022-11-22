@@ -238,13 +238,16 @@ public class HighwayPanel extends JPanel
     {
         public void run()
         {
+            long startTime;
+
             try
             {
                 while(true)
                 {
-                    sleep(8);
+                    startTime = System.currentTimeMillis();
                     repaint();
                     toolkit.sync();
+                    sleep(8 - (System.currentTimeMillis() - startTime));
                 }
             }
             catch(InterruptedException ie){}
