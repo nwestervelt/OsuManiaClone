@@ -25,6 +25,14 @@ public class MainFrame extends JFrame
         setResizable(false);
         setVisible(true);
     }
+    public void updateHit(int hitCount)
+    {
+        scorePanel.updateHit(hitCount);
+    }
+    public void updateMiss(int missCount)
+    {
+        scorePanel.updateMiss(missCount);
+    }
     public void updateScore(int score)
     {
         scorePanel.updateScore(score);
