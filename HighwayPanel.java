@@ -16,7 +16,7 @@ public class HighwayPanel extends JPanel
     private SongThread songThread;
     private ArrayList<Note> activeNotes;
     private Note currentNote;
-    private int noteX, noteY, hitCount, missCount, score, accuracy;
+    private int noteX, noteY, hitCount, hitWindow, missCount, score, accuracy;
     private long noteCreationTime;
     private BufferedImage[] keys, noteImages;
     private Toolkit toolkit;
@@ -32,6 +32,9 @@ public class HighwayPanel extends JPanel
 
         //initialize playing variable
         playing = false;
+
+        //initialize hit window (milliseconds before or after a note's hit time in which a hit is counted)
+        hitWindow = 60;
 
         //instantiate pressed state of keys
         keysPressed = new Object[4][2];
@@ -78,7 +81,7 @@ public class HighwayPanel extends JPanel
         animThread = new AnimationThread();
 
         //set this panel's appearance
-        setPreferredSize(new Dimension(600, 720));
+        setPreferredSize(new Dimension(600, 980));
         setFocusable(true);
         requestFocus();
     }
@@ -116,16 +119,8 @@ public class HighwayPanel extends JPanel
                 //if is a long note, draw it's body
                 if(currentNote.isLong())
                 {
-                    int length = currentNote.getLength();
-
-                    for(int j = 1; j <= length; j++)
-                    {
-                        //if at end of long note, draw another regular note as a tail
-                        if(j == length)
-                            g.drawImage(noteImages[0], noteX, noteY - (j * 50), null);
-                        else
-                            g.drawImage(noteImages[2], noteX, noteY - (j * 50), null);
-                    }
+                    g.drawImage(currentNote.getScaledBody(), noteX, noteY - currentNote.getLength() + 50, null);
+                    g.drawImage(noteImages[0], noteX, noteY - currentNote.getLength() , null);
                 }
             }
             //draw notes in inside columns
@@ -136,16 +131,8 @@ public class HighwayPanel extends JPanel
                 //if is a long note, draw it's body
                 if(currentNote.isLong())
                 {
-                    int length = currentNote.getLength();
-
-                    for(int j = 1; j <= length; j++)
-                    {
-                        //if at end of long note, draw another regular note as a tail
-                        if(j == length)
-                            g.drawImage(noteImages[1], noteX, noteY - (j * 50), null);
-                        else
-                            g.drawImage(noteImages[2], noteX, noteY - (j * 50), null);
-                    }
+                    g.drawImage(currentNote.getScaledBody(), noteX, noteY - currentNote.getLength() + 50, null);
+                    g.drawImage(noteImages[1], noteX, noteY - currentNote.getLength() , null);
                 }
             }
             noteCreationTime = currentNote.getCreationTime();
@@ -153,27 +140,35 @@ public class HighwayPanel extends JPanel
             //check for a hit or miss
             for(int j = 0; j < keysPressed.length; j++)
             {
-                //hit
-                if((boolean)keysPressed[j][0] && noteX == j * 100 + 100 &&
-                    ((long)keysPressed[j][1] - noteCreationTime <= 816 + 80 &&
-                    (long)keysPressed[j][1] - noteCreationTime >= 816 - 80))
+                //if key pressed matches column of note
+                if((boolean)keysPressed[j][0] && noteX == j * 100 + 100)
                 {
-                    if(!currentNote.isHit())
+                    //if within the hit window
+                    if((long)keysPressed[j][1] - noteCreationTime <= 816 + hitWindow &&
+                        (long)keysPressed[j][1] - noteCreationTime >= 816 - hitWindow)
                     {
-                        currentNote.hit();
-                        score += 50;
-                        parent.updateScore(score);
-                        parent.updateHit(++hitCount);
+                        //if not hit and not missed, mark as hit and set hold value for long notes
+                        if(!currentNote.isHit() && !currentNote.isMissed())
+                        {
+                            currentNote.hit();
+                            currentNote.setHeld(true);
+                        }
                     }
-                    else if(currentNote.isLong())
+                    //to prevent key mashing from working, mark as missed if hit slightly before the hit window
+                    else if(!currentNote.isMissed() && (long)keysPressed[j][1] - noteCreationTime < 816 - hitWindow &&
+                        (long)keysPressed[j][1] - noteCreationTime >= 816 - hitWindow + 50)
                     {
-
+                        currentNote.miss();
                     }
                 }
-                //miss
-                else if(!currentNote.isMissed() && System.currentTimeMillis() - noteCreationTime > 816 + 80)
+                //long note hold
+                else if(currentNote.isLong() && currentNote.isHeld())
                 {
-                    parent.updateMiss(++missCount);
+                }
+                //miss
+                else if(!currentNote.isHit() && !currentNote.isMissed()
+                    && System.currentTimeMillis() - noteCreationTime > 816 + hitWindow)
+                {
                     currentNote.miss();
                 }
             }
@@ -250,20 +245,27 @@ public class HighwayPanel extends JPanel
     }
     private class Note
     {
-        private int x, y, length;
+        private int x, y, length, duration;
         private long creationTime;
         private boolean isLong, isHit, isMissed, isHeld;
+        private Image scaledBody;
 
-        public Note(int column, boolean isLong, int length)
+        public Note(int column, boolean isLong, int duration)
         {
             x = (column * 100) + 100;
             y = -600;
-            this.length = length;
             this.isLong = isLong;
             creationTime = System.currentTimeMillis();
             isHit = false;
-            isHeld = false;
             isMissed = false;
+            isHeld = false;
+
+            if(isLong)
+            {
+                length = (int)(duration * 15.0 / 8);
+                scaledBody = noteImages[2].getScaledInstance(100, length - 50, Image.SCALE_FAST);
+                System.out.println(length);
+            }
         }
         //get the raw x coordinate of the note
         public int getX()
@@ -285,6 +287,11 @@ public class HighwayPanel extends JPanel
         {
             return length;
         }
+        //get the duration of the long note
+        public int getDuration()
+        {
+            return duration;
+        }
         //return the time this note was created
         public long getCreationTime()
         {
@@ -295,10 +302,18 @@ public class HighwayPanel extends JPanel
         {
             return isLong;
         }
+        //return the scaled image used for the body
+        public Image getScaledBody()
+        {
+            return scaledBody;
+        }
         //set hit state of this note
         public void hit()
         {
+            score += 50;
             isHit = true;
+            parent.updateHit(++hitCount);
+            parent.updateScore(score);
         }
         //return if this note has been hit
         public boolean isHit()
@@ -309,6 +324,7 @@ public class HighwayPanel extends JPanel
         public void miss()
         {
             isMissed = true;
+            parent.updateMiss(++missCount);
         }
         //return if this note has been missed
         public boolean isMissed()
@@ -320,6 +336,12 @@ public class HighwayPanel extends JPanel
         {
             this.isHeld = isHeld;
         }
+        //return if this note has been held
+        public boolean isHeld()
+        {
+            return isHeld;
+        }
+
     }
     private class AnimationThread extends Thread
     {
