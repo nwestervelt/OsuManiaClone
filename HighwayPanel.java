@@ -12,6 +12,7 @@ public class HighwayPanel extends JPanel
 {
     private MainFrame parent;
     private NoteReadingThread noteThread;
+    private NotePositionThread notePosThread;
     private AnimationThread animThread;
     private SongThread songThread;
     private ArrayList<Note> activeNotes;
@@ -75,8 +76,9 @@ public class HighwayPanel extends JPanel
         //add listener for the keys
         addKeyListener(new KeyHandler());
 
-        //create the threads for reading notes, the song, and the animation
+        //create the threads
         noteThread = new NoteReadingThread();
+        notePosThread = new NotePositionThread();
         songThread = new SongThread();
         animThread = new AnimationThread();
 
@@ -108,7 +110,7 @@ public class HighwayPanel extends JPanel
         for(int i = activeNotes.size() - 1; i > -1; i--)
         {
             currentNote = activeNotes.get(i);
-            noteY = currentNote.getY() + 15;
+            noteY = currentNote.getY();
             noteX = currentNote.getX();
 
             //draw notes in outside columns
@@ -173,16 +175,6 @@ public class HighwayPanel extends JPanel
                 }
             }
 
-            //update y position of note
-            currentNote.setY(noteY);
-
-            //remove regular note if it's offscreen
-            if(noteY > 1100 && !currentNote.isLong())
-                activeNotes.remove(i);
-
-            //remove long note if it's tail is offscreen
-            else if(currentNote.isLong() && noteY - (currentNote.getLength() * 50) > 1100)
-                activeNotes.remove(i);
         }
         //draw images associated with pressed keys
         if((boolean)keysPressed[0][0])
@@ -205,6 +197,7 @@ public class HighwayPanel extends JPanel
             if(ke.getKeyCode() == KeyEvent.VK_SPACE && !playing)
             {
                 noteThread.start();
+                notePosThread.start();
                 //songThread.start();
                 animThread.start();
                 playing = true;
@@ -264,7 +257,6 @@ public class HighwayPanel extends JPanel
             {
                 length = (int)(duration * 15.0 / 8);
                 scaledBody = noteImages[2].getScaledInstance(100, length - 50, Image.SCALE_FAST);
-                System.out.println(length);
             }
         }
         //get the raw x coordinate of the note
@@ -412,6 +404,53 @@ public class HighwayPanel extends JPanel
                     noteLength = noteFile.nextInt();
                 }
             }
+        }
+    }
+    private class NotePositionThread extends Thread
+    {
+        long startTime;
+
+        public void run()
+        {
+            try
+            {
+                //offset this thread from the animating thread, to avoid collisions
+                sleep(4);
+
+                Note currentNote;
+
+                while(true)
+                {
+                    startTime = System.currentTimeMillis();
+
+                    for(int i = activeNotes.size() - 1; i > 0; i--)
+                    {
+                        currentNote = activeNotes.get(i);
+
+                        //update y position
+                        currentNote.setY(currentNote.getY() + 15);
+
+                        //remove regular note if it's offscreen
+                        if(noteY > 1100 && !currentNote.isLong())
+                        {
+                            synchronized(activeNotes)
+                            {
+                                activeNotes.remove(i);
+                            }
+                        }
+                        //remove long note if it's tail is offscreen
+                        else if(currentNote.isLong() && noteY - (currentNote.getLength() * 50) > 1100)
+                        {
+                            synchronized(activeNotes)
+                            {
+                                activeNotes.remove(i);
+                            }
+                        }
+                    }
+                    sleep(8 - (System.currentTimeMillis() - startTime));
+                }
+            }
+            catch(InterruptedException ie){}
         }
     }
     private class SongThread extends Thread
