@@ -17,7 +17,7 @@ public class HighwayPanel extends JPanel
     private SongThread songThread;
     private ArrayList<Note> activeNotes;
     private Note currentNote;
-    private int noteX, noteY, hitCount, hitWindow, missCount, score, accuracy;
+    private int hitCount, hitWindow, missCount, score, accuracy;
     private long noteCreationTime;
     private BufferedImage[] keys, noteImages;
     private Toolkit toolkit;
@@ -110,31 +110,29 @@ public class HighwayPanel extends JPanel
         for(int i = activeNotes.size() - 1; i > -1; i--)
         {
             currentNote = activeNotes.get(i);
-            noteY = currentNote.getY();
-            noteX = currentNote.getX();
 
             //draw notes in outside columns
-            if(noteX == 100 || noteX == 400)
+            if(currentNote.getX() == 100 || currentNote.getX() == 400)
             {
-                g.drawImage(noteImages[0], noteX, noteY, null);
+                g.drawImage(noteImages[0], currentNote.getX(), currentNote.getY(), null);
 
                 //if is a long note, draw it's body
                 if(currentNote.isLong())
                 {
-                    g.drawImage(currentNote.getScaledBody(), noteX, noteY - currentNote.getLength() + 50, null);
-                    g.drawImage(noteImages[0], noteX, noteY - currentNote.getLength() , null);
+                    g.drawImage(currentNote.getScaledBody(), currentNote.getX(), currentNote.getY() - currentNote.getLength() + 50, null);
+                    g.drawImage(noteImages[0], currentNote.getX(), currentNote.getY() - currentNote.getLength() , null);
                 }
             }
             //draw notes in inside columns
-            else if(noteX == 200 || noteX == 300)
+            else if(currentNote.getX() == 200 || currentNote.getX() == 300)
             {
-                g.drawImage(noteImages[1], noteX, noteY, null);
+                g.drawImage(noteImages[1], currentNote.getX(), currentNote.getY(), null);
 
                 //if is a long note, draw it's body
                 if(currentNote.isLong())
                 {
-                    g.drawImage(currentNote.getScaledBody(), noteX, noteY - currentNote.getLength() + 50, null);
-                    g.drawImage(noteImages[1], noteX, noteY - currentNote.getLength() , null);
+                    g.drawImage(currentNote.getScaledBody(), currentNote.getX(), currentNote.getY() - currentNote.getLength() + 50, null);
+                    g.drawImage(noteImages[1], currentNote.getX(), currentNote.getY() - currentNote.getLength() , null);
                 }
             }
             noteCreationTime = currentNote.getCreationTime();
@@ -143,7 +141,7 @@ public class HighwayPanel extends JPanel
             for(int j = 0; j < keysPressed.length; j++)
             {
                 //if key pressed matches column of note
-                if((boolean)keysPressed[j][0] && noteX == j * 100 + 100)
+                if((boolean)keysPressed[j][0] && currentNote.getX() == j * 100 + 100)
                 {
                     //if within the hit window
                     if((long)keysPressed[j][1] - noteCreationTime <= 816 + hitWindow &&
@@ -389,7 +387,7 @@ public class HighwayPanel extends JPanel
             while(true)
             {
                 //when note's time is reached, add it
-                if(System.currentTimeMillis() - startTime == noteTime)
+                if(System.currentTimeMillis() - startTime >= noteTime)
                 {
                     //add note to active notes
                     activeNotes.add(new Note(noteColumn, noteLong, noteLength));
@@ -423,7 +421,7 @@ public class HighwayPanel extends JPanel
                 {
                     startTime = System.currentTimeMillis();
 
-                    for(int i = activeNotes.size() - 1; i > 0; i--)
+                    for(int i = activeNotes.size() - 1; i > -1; i--)
                     {
                         currentNote = activeNotes.get(i);
 
@@ -431,7 +429,7 @@ public class HighwayPanel extends JPanel
                         currentNote.setY(currentNote.getY() + 15);
 
                         //remove regular note if it's offscreen
-                        if(noteY > 1100 && !currentNote.isLong())
+                        if(currentNote.getY() > 1100 && !currentNote.isLong())
                         {
                             synchronized(activeNotes)
                             {
@@ -439,7 +437,7 @@ public class HighwayPanel extends JPanel
                             }
                         }
                         //remove long note if it's tail is offscreen
-                        else if(currentNote.isLong() && noteY - (currentNote.getLength() * 50) > 1100)
+                        else if(currentNote.isLong() && currentNote.getY() - (currentNote.getLength() * 50) > 1100)
                         {
                             synchronized(activeNotes)
                             {
