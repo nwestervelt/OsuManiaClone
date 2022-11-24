@@ -18,7 +18,6 @@ public class HighwayPanel extends JPanel
     private ArrayList<Note> activeNotes;
     private Note currentNote;
     private int hitCount, hitWindow, missCount, score, accuracy;
-    private long noteCreationTime;
     private BufferedImage[] keys, noteImages;
     private Toolkit toolkit;
     private boolean playing;
@@ -135,7 +134,6 @@ public class HighwayPanel extends JPanel
                     g.drawImage(noteImages[1], currentNote.getX(), currentNote.getY() - currentNote.getLength() , null);
                 }
             }
-            noteCreationTime = currentNote.getCreationTime();
 
             //check for a hit or miss
             for(int j = 0; j < keysPressed.length; j++)
@@ -144,8 +142,8 @@ public class HighwayPanel extends JPanel
                 if((boolean)keysPressed[j][0] && currentNote.getX() == j * 100 + 100)
                 {
                     //if within the hit window
-                    if((long)keysPressed[j][1] - noteCreationTime <= 816 + hitWindow &&
-                        (long)keysPressed[j][1] - noteCreationTime >= 816 - hitWindow)
+                    if((long)keysPressed[j][1] - currentNote.getCreationTime() <= 816 + hitWindow &&
+                        (long)keysPressed[j][1] - currentNote.getCreationTime() >= 816 - hitWindow)
                     {
                         //if not hit and not missed, mark as hit and set hold value for long notes
                         if(!currentNote.isHit() && !currentNote.isMissed())
@@ -155,19 +153,21 @@ public class HighwayPanel extends JPanel
                         }
                     }
                     //to prevent key mashing from working, mark as missed if hit slightly before the hit window
-                    else if(!currentNote.isMissed() && (long)keysPressed[j][1] - noteCreationTime < 816 - hitWindow &&
-                        (long)keysPressed[j][1] - noteCreationTime >= 816 - hitWindow + 50)
+                    else if(!currentNote.isMissed() && (long)keysPressed[j][1] - currentNote.getCreationTime() < 816 - hitWindow &&
+                        (long)keysPressed[j][1] - currentNote.getCreationTime() >= 816 - hitWindow + 50)
                     {
                         currentNote.miss();
                     }
                 }
-                //long note hold
-                else if(currentNote.isLong() && currentNote.isHeld())
+                //long note hold miss
+                else if(currentNote.isHeld() && currentNote.isLong() && !currentNote.isMissed() &&
+                    System.currentTimeMillis() - currentNote.getCreationTime() <= 816 + currentNote.getDuration() + hitWindow)
                 {
+                    currentNote.miss();
                 }
                 //miss
                 else if(!currentNote.isHit() && !currentNote.isMissed()
-                    && System.currentTimeMillis() - noteCreationTime > 816 + hitWindow)
+                    && System.currentTimeMillis() - currentNote.getCreationTime() > 816 + hitWindow)
                 {
                     currentNote.miss();
                 }
