@@ -165,14 +165,26 @@ public class HighwayPanel extends JPanel
                     //if key not pressed and note not missed
                     else if(!currentNote.isMissed())
                     {
-                        //if current note is long, is being held, and key is released during the long note
-                        if(currentNote.isLong() && currentNote.isHeld() &&
-                            (long)keysPressed[j][1] - currentNote.getCreationTime() > delay &&
-                            (long)keysPressed[j][1] - currentNote.getCreationTime() < delay + currentNote.getDuration() - hitWindow)
+                        //if current note is long and is being held
+                        if(currentNote.isLong() && currentNote.isHeld())
                         {
-                            //mark as missed and not held
-                            currentNote.miss();
-                            currentNote.setHeld(false);
+                            //if key is released within hit window of long note's end
+                            if((long)keysPressed[j][1] - currentNote.getCreationTime() <= delay + currentNote.getDuration() + hitWindow &&
+                                (long)keysPressed[j][1] - currentNote.getCreationTime() >= delay + currentNote.getDuration() - hitWindow)
+                            {
+                                currentNote.hit();
+
+                                //set release time to sentinel value to keep from triggering hit repeatedly
+                                keysPressed[j][1] = 0l;
+                            }
+                            //if key is released during the long note
+                            if((long)keysPressed[j][1] - currentNote.getCreationTime() > delay &&
+                                (long)keysPressed[j][1] - currentNote.getCreationTime() < delay + currentNote.getDuration() - hitWindow)
+                            {
+                                //mark as missed and not held
+                                currentNote.miss();
+                                currentNote.setHeld(false);
+                            }
                         }
                         //if note not hit and goes past note hit area + size of hit window, mark as missed
                         else if(!currentNote.isHit() && System.currentTimeMillis() - currentNote.getCreationTime() > delay + hitWindow)
