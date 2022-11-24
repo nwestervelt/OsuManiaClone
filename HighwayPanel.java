@@ -172,9 +172,8 @@ public class HighwayPanel extends JPanel
                             if((long)keysPressed[j][1] - currentNote.getCreationTime() <= delay + currentNote.getDuration() + hitWindow &&
                                 (long)keysPressed[j][1] - currentNote.getCreationTime() >= delay + currentNote.getDuration() - hitWindow)
                             {
+                                //mark as hit and set release time to sentinel value to keep from triggering hit repeatedly
                                 currentNote.hit();
-
-                                //set release time to sentinel value to keep from triggering hit repeatedly
                                 keysPressed[j][1] = 0l;
                             }
                             //if key is released during the long note
@@ -189,6 +188,7 @@ public class HighwayPanel extends JPanel
                         //if note not hit and goes past note hit area + size of hit window, mark as missed
                         else if(!currentNote.isHit() && System.currentTimeMillis() - currentNote.getCreationTime() > delay + hitWindow)
                         {
+                            //mark as missed
                             currentNote.miss();
                         }
                     }
