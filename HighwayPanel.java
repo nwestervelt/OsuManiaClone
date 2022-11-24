@@ -137,42 +137,49 @@ public class HighwayPanel extends JPanel
                     g.drawImage(noteImages[1], currentNote.getX(), currentNote.getY() - currentNote.getLength() , null);
                 }
             }
-
             //check for a hit or miss
             for(int j = 0; j < keysPressed.length; j++)
             {
-                //if key pressed matches column of note
-                if((boolean)keysPressed[j][0] && currentNote.getX() == j * 100 + 100)
+                //if current note's column matches this key
+                if(currentNote.getX() == j * 100 + 100)
                 {
-                    //if within the hit window
-                    if((long)keysPressed[j][1] - currentNote.getCreationTime() <= delay + hitWindow &&
-                        (long)keysPressed[j][1] - currentNote.getCreationTime() >= delay - hitWindow)
+                    //if key pressed
+                    if((boolean)keysPressed[j][0])
                     {
-                        //if not hit and not missed, mark as hit and set hold value for long notes
-                        if(!currentNote.isHit() && !currentNote.isMissed())
+                        //if within the hit window, not hit, and not missed
+                        if(!currentNote.isHit() && !currentNote.isMissed() &&
+                            (long)keysPressed[j][1] - currentNote.getCreationTime() <= delay + hitWindow &&
+                            (long)keysPressed[j][1] - currentNote.getCreationTime() >= delay - hitWindow)
                         {
+                            //mark as hit and held
                             currentNote.hit();
                             currentNote.setHeld(true);
                         }
+                        //to prevent key mashing from working, mark as missed if hit slightly before the hit window
+                        else if(!currentNote.isMissed() && (long)keysPressed[j][1] - currentNote.getCreationTime() < delay - hitWindow &&
+                            (long)keysPressed[j][1] - currentNote.getCreationTime() >= delay - hitWindow + 50)
+                        {
+                            currentNote.miss();
+                        }
                     }
-                    //to prevent key mashing from working, mark as missed if hit slightly before the hit window
-                    else if(!currentNote.isMissed() && (long)keysPressed[j][1] - currentNote.getCreationTime() < delay - hitWindow &&
-                        (long)keysPressed[j][1] - currentNote.getCreationTime() >= delay - hitWindow + 50)
+                    //if key not pressed and note not missed
+                    else if(!currentNote.isMissed())
                     {
-                        currentNote.miss();
+                        //if current note is long, is being held, and key is released during the long note
+                        if(currentNote.isLong() && currentNote.isHeld() &&
+                            (long)keysPressed[j][1] - currentNote.getCreationTime() > delay &&
+                            (long)keysPressed[j][1] - currentNote.getCreationTime() < delay + currentNote.getDuration() - hitWindow)
+                        {
+                            //mark as missed and not held
+                            currentNote.miss();
+                            currentNote.setHeld(false);
+                        }
+                        //if note not hit and goes past note hit area + size of hit window, mark as missed
+                        else if(!currentNote.isHit() && System.currentTimeMillis() - currentNote.getCreationTime() > delay + hitWindow)
+                        {
+                            currentNote.miss();
+                        }
                     }
-                }
-                //long note hold miss
-                else if(currentNote.isHeld() && currentNote.isLong() && !currentNote.isMissed() &&
-                    System.currentTimeMillis() - currentNote.getCreationTime() <= delay + currentNote.getDuration() + hitWindow)
-                {
-                    currentNote.miss();
-                }
-                //miss
-                else if(!currentNote.isHit() && !currentNote.isMissed()
-                    && System.currentTimeMillis() - currentNote.getCreationTime() > delay + hitWindow)
-                {
-                    currentNote.miss();
                 }
             }
         }
@@ -211,25 +218,25 @@ public class HighwayPanel extends JPanel
         private void setKeyState(KeyEvent ke, boolean pressed)
         {
             if(ke.getKeyCode() == KeyEvent.VK_D && !(boolean)keysPressed[0][0] ||
-                !pressed)
+                ke.getKeyCode() == KeyEvent.VK_D && !pressed)
             {
                 keysPressed[0][0] = pressed;
                 keysPressed[0][1] = System.currentTimeMillis();
             }
             if(ke.getKeyCode() == KeyEvent.VK_F && !(boolean)keysPressed[1][0] ||
-                !pressed)
+                ke.getKeyCode() == KeyEvent.VK_F && !pressed)
             {
                 keysPressed[1][0] = pressed;
                 keysPressed[1][1] = System.currentTimeMillis();
             }
             if(ke.getKeyCode() == KeyEvent.VK_J && !(boolean)keysPressed[2][0] ||
-                !pressed)
+                ke.getKeyCode() == KeyEvent.VK_J && !pressed)
             {
                 keysPressed[2][0] = pressed;
                 keysPressed[2][1] = System.currentTimeMillis();
             }
             if(ke.getKeyCode() == KeyEvent.VK_K && !(boolean)keysPressed[3][0] ||
-                !pressed)
+                ke.getKeyCode() == KeyEvent.VK_K && !pressed)
             {
                 keysPressed[3][0] = pressed;
                 keysPressed[3][1] = System.currentTimeMillis();
@@ -248,6 +255,7 @@ public class HighwayPanel extends JPanel
             x = (column * 100) + 100;
             y = -600;
             this.isLong = isLong;
+            this.duration = duration;
             creationTime = System.currentTimeMillis();
             isHit = false;
             isMissed = false;
