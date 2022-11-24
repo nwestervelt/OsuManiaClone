@@ -17,7 +17,7 @@ public class HighwayPanel extends JPanel
     private SongThread songThread;
     private ArrayList<Note> activeNotes;
     private Note currentNote;
-    private int hitCount, hitWindow, missCount, score, accuracy;
+    private int hitCount, hitWindow, missCount, score, accuracy, delay;
     private BufferedImage[] keys, noteImages;
     private Toolkit toolkit;
     private boolean playing;
@@ -35,6 +35,9 @@ public class HighwayPanel extends JPanel
 
         //initialize hit window (milliseconds before or after a note's hit time in which a hit is counted)
         hitWindow = 60;
+
+        //initialize delay (which compensates for input delay and tells when the notes can be hit)
+        delay = 816;
 
         //instantiate pressed state of keys
         keysPressed = new Object[4][2];
@@ -142,8 +145,8 @@ public class HighwayPanel extends JPanel
                 if((boolean)keysPressed[j][0] && currentNote.getX() == j * 100 + 100)
                 {
                     //if within the hit window
-                    if((long)keysPressed[j][1] - currentNote.getCreationTime() <= 816 + hitWindow &&
-                        (long)keysPressed[j][1] - currentNote.getCreationTime() >= 816 - hitWindow)
+                    if((long)keysPressed[j][1] - currentNote.getCreationTime() <= delay + hitWindow &&
+                        (long)keysPressed[j][1] - currentNote.getCreationTime() >= delay - hitWindow)
                     {
                         //if not hit and not missed, mark as hit and set hold value for long notes
                         if(!currentNote.isHit() && !currentNote.isMissed())
@@ -153,26 +156,25 @@ public class HighwayPanel extends JPanel
                         }
                     }
                     //to prevent key mashing from working, mark as missed if hit slightly before the hit window
-                    else if(!currentNote.isMissed() && (long)keysPressed[j][1] - currentNote.getCreationTime() < 816 - hitWindow &&
-                        (long)keysPressed[j][1] - currentNote.getCreationTime() >= 816 - hitWindow + 50)
+                    else if(!currentNote.isMissed() && (long)keysPressed[j][1] - currentNote.getCreationTime() < delay - hitWindow &&
+                        (long)keysPressed[j][1] - currentNote.getCreationTime() >= delay - hitWindow + 50)
                     {
                         currentNote.miss();
                     }
                 }
                 //long note hold miss
                 else if(currentNote.isHeld() && currentNote.isLong() && !currentNote.isMissed() &&
-                    System.currentTimeMillis() - currentNote.getCreationTime() <= 816 + currentNote.getDuration() + hitWindow)
+                    System.currentTimeMillis() - currentNote.getCreationTime() <= delay + currentNote.getDuration() + hitWindow)
                 {
                     currentNote.miss();
                 }
                 //miss
                 else if(!currentNote.isHit() && !currentNote.isMissed()
-                    && System.currentTimeMillis() - currentNote.getCreationTime() > 816 + hitWindow)
+                    && System.currentTimeMillis() - currentNote.getCreationTime() > delay + hitWindow)
                 {
                     currentNote.miss();
                 }
             }
-
         }
         //draw images associated with pressed keys
         if((boolean)keysPressed[0][0])
