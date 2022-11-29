@@ -20,7 +20,7 @@ public class ScorePanel extends JPanel
         //accuracy field, label, and panel
         JPanel accuracyPanel = new JPanel();
         JLabel accuracyLabel = new JLabel("Accuracy: ");
-        accuracyField = new JTextField("100%", 10);
+        accuracyField = new JTextField("100.0%", 10);
         add(accuracyPanel);
         accuracyPanel.add(accuracyLabel);
         accuracyPanel.add(accuracyField);
@@ -44,6 +44,10 @@ public class ScorePanel extends JPanel
         //set this panel's appearance
         setPreferredSize(new Dimension(200, 980));
         setFocusable(false);
+    }
+    public void updateAccuracy(double accuracy)
+    {
+        accuracyField.setText(String.format("%3.1f", accuracy) + "%");
     }
     public void updateHit(int hitCount)
     {

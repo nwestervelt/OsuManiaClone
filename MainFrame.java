@@ -25,6 +25,10 @@ public class MainFrame extends JFrame
         setResizable(false);
         setVisible(true);
     }
+    public void updateAccuracy(double accuracy)
+    {
+        scorePanel.updateAccuracy(accuracy);
+    }
     public void updateHit(int hitCount)
     {
         scorePanel.updateHit(hitCount);

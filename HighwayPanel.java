@@ -17,7 +17,7 @@ public class HighwayPanel extends JPanel
     private SongThread songThread;
     private ArrayList<Note> activeNotes;
     private Note currentNote;
-    private int hitCount, hitWindow, missCount, score, accuracy, delay;
+    private int hitCount, hitWindow, missCount, score, delay;
     private BufferedImage[] keys, noteImages;
     private Toolkit toolkit;
     private boolean playing;
@@ -154,12 +154,15 @@ public class HighwayPanel extends JPanel
                             //mark as hit and held
                             currentNote.hit();
                             currentNote.setHeld(true);
+                            updateAccuracy();
+
                         }
                         //to prevent key mashing from working, mark as missed if hit slightly before the hit window
                         else if(!currentNote.isMissed() && (long)keysPressed[j][1] - currentNote.getCreationTime() < delay - hitWindow &&
                             (long)keysPressed[j][1] - currentNote.getCreationTime() >= delay - hitWindow + 50)
                         {
                             currentNote.miss();
+                            updateAccuracy();
                         }
                     }
                     //if key not pressed and note not missed
@@ -175,6 +178,7 @@ public class HighwayPanel extends JPanel
                                 //mark as hit and set release time to sentinel value to keep from triggering hit repeatedly
                                 currentNote.hit();
                                 keysPressed[j][1] = 0l;
+                                updateAccuracy();
                             }
                             //if key is released during the long note
                             if((long)keysPressed[j][1] - currentNote.getCreationTime() > delay &&
@@ -183,6 +187,7 @@ public class HighwayPanel extends JPanel
                                 //mark as missed and not held
                                 currentNote.miss();
                                 currentNote.setHeld(false);
+                                updateAccuracy();
                             }
                         }
                         //if note not hit and goes past note hit area + size of hit window, mark as missed
@@ -190,6 +195,7 @@ public class HighwayPanel extends JPanel
                         {
                             //mark as missed
                             currentNote.miss();
+                            updateAccuracy();
                         }
                     }
                 }
@@ -204,6 +210,10 @@ public class HighwayPanel extends JPanel
             g.drawImage(keys[2], 300, 780, null);
         if((boolean)keysPressed[3][0])
             g.drawImage(keys[3], 400, 780, null);
+    }
+    private void updateAccuracy()
+    {
+        parent.updateAccuracy(100 * ((double)hitCount / (hitCount + missCount)));
     }
     private class KeyHandler extends KeyAdapter
     {
@@ -335,6 +345,10 @@ public class HighwayPanel extends JPanel
         //set miss state of this note
         public void miss()
         {
+            //give double weight to misses on long note beginnings
+            if(isLong && !isHit)
+                ++missCount;
+
             isMissed = true;
             parent.updateMiss(++missCount);
         }
@@ -353,7 +367,6 @@ public class HighwayPanel extends JPanel
         {
             return isHeld;
         }
-
     }
     private class AnimationThread extends Thread
     {
@@ -477,7 +490,7 @@ public class HighwayPanel extends JPanel
     {
         private Clip song;
 
-        public void run()
+        public SongThread()
         {
             try
             {
@@ -487,7 +500,18 @@ public class HighwayPanel extends JPanel
                 //create the stream to play the audio from
                 AudioInputStream ais = AudioSystem.getAudioInputStream(new File("pathToSongFile"));
                 song.open(ais);
+            }
+            catch(Exception e)
+            {
+                System.out.println(e);
+                System.exit(1);
+            }
+        }
 
+        public void run()
+        {
+            try
+            {
                 //start playing the audio
                 song.start();
             }
