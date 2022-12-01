@@ -227,7 +227,7 @@ public class HighwayPanel extends JPanel
             {
                 noteThread.start();
                 notePosThread.start();
-                //songThread.start();
+                songThread.start();
                 animThread.start();
                 playing = true;
             }
@@ -287,6 +287,7 @@ public class HighwayPanel extends JPanel
             {
                 length = (int)(duration * 15.0 / 8);
                 scaledBody = noteImages[2].getScaledInstance(100, length - 50, Image.SCALE_FAST);
+                System.out.println(length);
             }
         }
         //get the raw x coordinate of the note
@@ -378,10 +379,11 @@ public class HighwayPanel extends JPanel
             {
                 while(true)
                 {
-                    startTime = System.currentTimeMillis();
+                    //startTime = System.currentTimeMillis();
                     repaint();
                     toolkit.sync();
-                    sleep(8 - (System.currentTimeMillis() - startTime));
+                    //sleep(8 - (System.currentTimeMillis() - startTime));
+                    sleep(8);
                 }
             }
             catch(InterruptedException ie){}
@@ -498,7 +500,8 @@ public class HighwayPanel extends JPanel
                 song = AudioSystem.getClip();
 
                 //create the stream to play the audio from
-                AudioInputStream ais = AudioSystem.getAudioInputStream(new File("pathToSongFile"));
+                AudioInputStream ais = AudioSystem.getAudioInputStream(new File(
+                    "Jim Yosef & Anna Yvette - Courage [NCS Release].wav"));
                 song.open(ais);
             }
             catch(Exception e)
