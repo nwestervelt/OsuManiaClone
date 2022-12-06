@@ -500,8 +500,7 @@ public class HighwayPanel extends JPanel
                 song = AudioSystem.getClip();
 
                 //create the stream to play the audio from
-                AudioInputStream ais = AudioSystem.getAudioInputStream(new File(
-                    "Jim Yosef & Anna Yvette - Courage [NCS Release].wav"));
+                AudioInputStream ais = AudioSystem.getAudioInputStream(new File("song.wav"));
                 song.open(ais);
             }
             catch(Exception e)
