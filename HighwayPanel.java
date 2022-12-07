@@ -287,7 +287,6 @@ public class HighwayPanel extends JPanel
             {
                 length = (int)(duration * 15.0 / 8);
                 scaledBody = noteImages[2].getScaledInstance(100, length - 50, Image.SCALE_FAST);
-                System.out.println(length);
             }
         }
         //get the raw x coordinate of the note
@@ -379,11 +378,11 @@ public class HighwayPanel extends JPanel
             {
                 while(true)
                 {
-                    //startTime = System.currentTimeMillis();
+                    startTime = System.currentTimeMillis();
                     repaint();
                     toolkit.sync();
-                    //sleep(8 - (System.currentTimeMillis() - startTime));
-                    sleep(8);
+                    sleep(8 - (System.currentTimeMillis() - startTime));
+                    //sleep(8);
                 }
             }
             catch(InterruptedException ie){}
