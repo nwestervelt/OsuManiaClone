@@ -7,6 +7,7 @@ import java.util.*;
 import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.imageio.*;
+import java.net.*;
 
 public class HighwayPanel extends JPanel
 {
@@ -59,21 +60,21 @@ public class HighwayPanel extends JPanel
         try
         {
             //create key images
-            keys[0] = ImageIO.read(new File("images/redKey.png"));
-            keys[1] = ImageIO.read(new File("images/blueKey.png"));
-            keys[2] = ImageIO.read(new File("images/blueKey.png"));
-            keys[3] = ImageIO.read(new File("images/redKey.png"));
+            keys[0] = ImageIO.read(new URL("jar:file:OsuManiaClone.jar!/images/redKey.png"));
+            keys[1] = ImageIO.read(new URL("jar:file:OsuManiaClone.jar!/images/blueKey.png"));
+            keys[2] = ImageIO.read(new URL("jar:file:OsuManiaClone.jar!/images/blueKey.png"));
+            keys[3] = ImageIO.read(new URL("jar:file:OsuManiaClone.jar!/images/redKey.png"));
 
             //create note images
-            noteImages[0] = ImageIO.read(new File("images/redNote.png"));
-            noteImages[1] = ImageIO.read(new File("images/blueNote.png"));
-            noteImages[2] = ImageIO.read(new File("images/longNoteBody.png"));
+            noteImages[0] = ImageIO.read(new URL("jar:file:OsuManiaClone.jar!/images/redNote.png"));
+            noteImages[1] = ImageIO.read(new URL("jar:file:OsuManiaClone.jar!/images/blueNote.png"));
+            noteImages[2] = ImageIO.read(new URL("jar:file:OsuManiaClone.jar!/images/longNoteBody.png"));
 
             //get clip to play audio from
             song = AudioSystem.getClip();
 
             //create the stream to play the audio from
-            AudioInputStream ais = AudioSystem.getAudioInputStream(new File("song.wav"));
+            AudioInputStream ais = AudioSystem.getAudioInputStream(new URL("jar:file:OsuManiaClone.jar!/song.wav"));
             song.open(ais);
         }
         catch(Exception e)
@@ -233,7 +234,7 @@ public class HighwayPanel extends JPanel
             {
                 song = AudioSystem.getClip();
 
-                AudioInputStream ais = AudioSystem.getAudioInputStream(new File("song.wav"));
+                AudioInputStream ais = AudioSystem.getAudioInputStream(new URL("jar:file:OsuManiaClone.jar!/song.wav"));
                 song.open(ais);
 
             }
@@ -289,7 +290,7 @@ public class HighwayPanel extends JPanel
                 {
                     song = AudioSystem.getClip();
 
-                    AudioInputStream ais = AudioSystem.getAudioInputStream(new File("song.wav"));
+                    AudioInputStream ais = AudioSystem.getAudioInputStream(new URL("jar:file:OsuManiaClone.jar!/song.wav"));
                     song.open(ais);
 
                 }
@@ -465,9 +466,8 @@ public class HighwayPanel extends JPanel
     }
     private class NoteReadingThread extends Thread
     {
-        private int noteTime, noteColumn, noteLength;
-        private boolean noteLong;
-        private Scanner noteFile;
+        private final int noteTime = 0, noteColumn = 1, noteLong = 2, noteLength = 3;
+        private BufferedReader noteFile;
         private long startTime;
 
         public NoteReadingThread()
@@ -475,11 +475,12 @@ public class HighwayPanel extends JPanel
             //open the note file
             try
             {
-                noteFile = new Scanner(new File("noteFile.txt"));
+                URL ul = new URL("jar:file:OsuManiaClone.jar!/noteFile.txt");
+                noteFile = new BufferedReader(new InputStreamReader(ul.openStream()));
             }
-            catch(FileNotFoundException fnfe)
+            catch(Exception e)
             {
-                System.out.println(fnfe);
+                System.out.println(e);
                 System.exit(1);
             }
         }
@@ -489,29 +490,33 @@ public class HighwayPanel extends JPanel
             //set the starting time
             startTime = System.currentTimeMillis();
 
-            //priming read of note information
-            noteTime = noteFile.nextInt();
-            noteColumn = noteFile.nextInt();
-            noteLong = noteFile.nextBoolean();
-            noteLength = noteFile.nextInt();
-
-            while(playing)
+            try
             {
-                //when note's time is reached, add it
-                if(System.currentTimeMillis() - startTime >= noteTime)
+                //priming read of note information
+                String line = noteFile.readLine();
+                String[] noteStrings = line.split(" ");
+
+                while(playing)
                 {
-                    //add note to active notes
-                    activeNotes.add(new Note(noteColumn, noteLong, noteLength));
+                    //when note's time is reached, add it
+                    if(System.currentTimeMillis() - startTime >= Integer.parseInt(noteStrings[noteTime]))
+                    {
+                        //add note to active notes
+                        activeNotes.add(new Note(Integer.parseInt(noteStrings[noteColumn]),
+                            Boolean.parseBoolean(noteStrings[noteLong]), Integer.parseInt(noteStrings[noteLength])));
 
-                    //stop reading when end of file is reached
-                    if(!noteFile.hasNext()) break;
+                        line = noteFile.readLine();
 
-                    //read next note information
-                    noteTime = noteFile.nextInt();
-                    noteColumn = noteFile.nextInt();
-                    noteLong = noteFile.nextBoolean();
-                    noteLength = noteFile.nextInt();
+                        //stop reading when end of file is reached
+                        if(line == null) break;
+                        else noteStrings = line.split(" ");
+                    }
                 }
+            }
+            catch(IOException ioe)
+            {
+                System.out.println(ioe);
+                System.exit(1);
             }
         }
     }
