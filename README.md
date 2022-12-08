@@ -6,7 +6,8 @@ A simple clone of the rhythm game osu! Mania.
 
 Press the D, F, J, and K keys to the beat. As the notes fall from  
 the top of the screen, press these keys when the notes hit the  
-judgement line (horizontal gray line) at the bottom.
+judgement line (horizontal gray line) at the bottom. D is the  
+leftmost column, F is next (moving to the right), then J, then K.
 
 Long notes have a white body that looks like a column. Hit / Miss  
 is counted at the beginning and end of long notes, meaning you have  

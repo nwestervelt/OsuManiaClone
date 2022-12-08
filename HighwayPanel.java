@@ -216,6 +216,38 @@ public class HighwayPanel extends JPanel
             g.drawImage(keys[2], 300, 780, null);
         if((boolean)keysPressed[3][0])
             g.drawImage(keys[3], 400, 780, null);
+
+        //if song is done playing, end the game and prepare for restart
+        if(!song.isActive())
+        {
+            playing = false;
+            hitCount = 0;
+            missCount = 0;
+            score = 0;
+
+            noteThread = new NoteReadingThread();
+            notePosThread = new NotePositionThread();
+            animThread = new AnimationThread();
+
+            try
+            {
+                song = AudioSystem.getClip();
+
+                AudioInputStream ais = AudioSystem.getAudioInputStream(new File("song.wav"));
+                song.open(ais);
+
+            }
+            catch(Exception e)
+            {
+                System.out.println(e);
+                System.exit(1);
+            }
+
+            g.setColor(Color.YELLOW);
+            g.fillRect(200, 400, 200, 50);
+            g.setColor(Color.BLACK);
+            g.drawString("Not Playing", 270, 428);
+        }
     }
     private void updateAccuracy()
     {
