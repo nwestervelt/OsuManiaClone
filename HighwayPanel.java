@@ -14,14 +14,14 @@ public class HighwayPanel extends JPanel
     private NoteReadingThread noteThread;
     private NotePositionThread notePosThread;
     private AnimationThread animThread;
-    private SongThread songThread;
     private ArrayList<Note> activeNotes;
     private Note currentNote;
     private int hitCount, hitWindow, missCount, score, delay;
     private BufferedImage[] keys, noteImages;
     private Toolkit toolkit;
-    private boolean playing;
+    private volatile boolean playing;
     private Object[][] keysPressed;
+    private Clip song;
 
     public HighwayPanel(MainFrame parent)
     {
@@ -68,10 +68,17 @@ public class HighwayPanel extends JPanel
             noteImages[0] = ImageIO.read(new File("images/redNote.png"));
             noteImages[1] = ImageIO.read(new File("images/blueNote.png"));
             noteImages[2] = ImageIO.read(new File("images/longNoteBody.png"));
+
+            //get clip to play audio from
+            song = AudioSystem.getClip();
+
+            //create the stream to play the audio from
+            AudioInputStream ais = AudioSystem.getAudioInputStream(new File("song.wav"));
+            song.open(ais);
         }
-        catch(IOException ioe)
+        catch(Exception e)
         {
-            System.out.println(ioe);
+            System.out.println(e);
             System.exit(1);
         }
 
@@ -81,7 +88,6 @@ public class HighwayPanel extends JPanel
         //create the threads
         noteThread = new NoteReadingThread();
         notePosThread = new NotePositionThread();
-        songThread = new SongThread();
         animThread = new AnimationThread();
 
         //set this panel's appearance
@@ -213,7 +219,11 @@ public class HighwayPanel extends JPanel
     }
     private void updateAccuracy()
     {
-        parent.updateAccuracy(100 * ((double)hitCount / (hitCount + missCount)));
+        if(playing)
+            parent.updateAccuracy(100 * ((double)hitCount / (hitCount + missCount)));
+
+        else
+            parent.updateAccuracy(100);
     }
     private class KeyHandler extends KeyAdapter
     {
@@ -227,9 +237,42 @@ public class HighwayPanel extends JPanel
             {
                 noteThread.start();
                 notePosThread.start();
-                songThread.start();
+                song.start();
                 animThread.start();
                 playing = true;
+            }
+            else if(ke.getKeyCode() == KeyEvent.VK_P && playing)
+            {
+                //set not playing, and stop song
+                playing = false;
+                song.stop();
+
+                //reset the program for restarting
+                noteThread = new NoteReadingThread();
+                notePosThread = new NotePositionThread();
+                animThread = new AnimationThread();
+                playing = false;
+
+                try
+                {
+                    song = AudioSystem.getClip();
+
+                    AudioInputStream ais = AudioSystem.getAudioInputStream(new File("song.wav"));
+                    song.open(ais);
+
+                }
+                catch(Exception e)
+                {
+                    System.out.println(e);
+                    System.exit(1);
+                }
+                activeNotes = new ArrayList<Note>();
+                parent.updateHit((hitCount=0));
+                parent.updateMiss((missCount=0));
+                parent.updateScore((score=0));
+                updateAccuracy();
+
+                repaint();
             }
         }
         public void keyReleased(KeyEvent ke)
@@ -376,7 +419,7 @@ public class HighwayPanel extends JPanel
 
             try
             {
-                while(true)
+                while(playing)
                 {
                     startTime = System.currentTimeMillis();
                     repaint();
@@ -420,7 +463,7 @@ public class HighwayPanel extends JPanel
             noteLong = noteFile.nextBoolean();
             noteLength = noteFile.nextInt();
 
-            while(true)
+            while(playing)
             {
                 //when note's time is reached, add it
                 if(System.currentTimeMillis() - startTime >= noteTime)
@@ -453,7 +496,7 @@ public class HighwayPanel extends JPanel
 
                 Note currentNote;
 
-                while(true)
+                while(playing)
                 {
                     startTime = System.currentTimeMillis();
 
@@ -485,42 +528,6 @@ public class HighwayPanel extends JPanel
                 }
             }
             catch(InterruptedException ie){}
-        }
-    }
-    private class SongThread extends Thread
-    {
-        private Clip song;
-
-        public SongThread()
-        {
-            try
-            {
-                //get clip to play audio from
-                song = AudioSystem.getClip();
-
-                //create the stream to play the audio from
-                AudioInputStream ais = AudioSystem.getAudioInputStream(new File("song.wav"));
-                song.open(ais);
-            }
-            catch(Exception e)
-            {
-                System.out.println(e);
-                System.exit(1);
-            }
-        }
-
-        public void run()
-        {
-            try
-            {
-                //start playing the audio
-                song.start();
-            }
-            catch(Exception e)
-            {
-                System.out.println(e);
-                System.exit(1);
-            }
         }
     }
 }
