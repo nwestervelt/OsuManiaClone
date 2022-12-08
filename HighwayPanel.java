@@ -448,7 +448,7 @@ public class HighwayPanel extends JPanel
     {
         public void run()
         {
-            long startTime;
+            long startTime, elapsedTime;
 
             try
             {
@@ -457,7 +457,9 @@ public class HighwayPanel extends JPanel
                     startTime = System.currentTimeMillis();
                     repaint();
                     toolkit.sync();
-                    sleep(8 - (System.currentTimeMillis() - startTime));
+
+                    if((elapsedTime = (System.currentTimeMillis() - startTime)) < 8)
+                        sleep(8 - elapsedTime);
                     //sleep(8);
                 }
             }
