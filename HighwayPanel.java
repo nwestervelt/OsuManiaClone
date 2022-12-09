@@ -252,7 +252,7 @@ public class HighwayPanel extends JPanel
     }
     private void updateAccuracy()
     {
-        if(hitCount != 0 && missCount != 0)
+        if(hitCount != 0 || missCount != 0)
             parent.updateAccuracy(100 * ((double)hitCount / (hitCount + missCount)));
 
         else
@@ -273,6 +273,12 @@ public class HighwayPanel extends JPanel
                 notePosThread.start();
                 song.start();
                 animThread.start();
+
+                activeNotes = new ArrayList<Note>();
+                parent.updateHit((hitCount=0));
+                parent.updateMiss((missCount=0));
+                parent.updateScore((score=0));
+                updateAccuracy();
             }
             else if(ke.getKeyCode() == KeyEvent.VK_P && playing)
             {
