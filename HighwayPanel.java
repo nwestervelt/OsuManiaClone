@@ -252,7 +252,7 @@ public class HighwayPanel extends JPanel
     }
     private void updateAccuracy()
     {
-        if(playing)
+        if(hitCount != 0 && missCount != 0)
             parent.updateAccuracy(100 * ((double)hitCount / (hitCount + missCount)));
 
         else
@@ -268,11 +268,11 @@ public class HighwayPanel extends JPanel
             //if space is pressed, start the game and it's threads
             if(ke.getKeyCode() == KeyEvent.VK_SPACE && !playing)
             {
+                playing = true;
                 noteThread.start();
                 notePosThread.start();
                 song.start();
                 animThread.start();
-                playing = true;
             }
             else if(ke.getKeyCode() == KeyEvent.VK_P && playing)
             {
@@ -460,7 +460,6 @@ public class HighwayPanel extends JPanel
 
                     if((elapsedTime = (System.currentTimeMillis() - startTime)) < 8)
                         sleep(8 - elapsedTime);
-                    //sleep(8);
                 }
             }
             catch(InterruptedException ie){}
