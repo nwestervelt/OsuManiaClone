@@ -268,17 +268,17 @@ public class HighwayPanel extends JPanel
             //if space is pressed, start the game and it's threads
             if(ke.getKeyCode() == KeyEvent.VK_SPACE && !playing)
             {
-                playing = true;
-                noteThread.start();
-                notePosThread.start();
-                song.start();
-                animThread.start();
-
                 activeNotes = new ArrayList<Note>();
                 parent.updateHit((hitCount=0));
                 parent.updateMiss((missCount=0));
                 parent.updateScore((score=0));
                 updateAccuracy();
+
+                playing = true;
+                noteThread.start();
+                notePosThread.start();
+                song.start();
+                animThread.start();
             }
             else if(ke.getKeyCode() == KeyEvent.VK_P && playing)
             {
@@ -290,7 +290,6 @@ public class HighwayPanel extends JPanel
                 noteThread = new NoteReadingThread();
                 notePosThread = new NotePositionThread();
                 animThread = new AnimationThread();
-                playing = false;
 
                 try
                 {
