@@ -164,6 +164,12 @@ public class HighwayPanel extends JPanel
                             updateAccuracy();
 
                         }
+                        else if(currentNote.isLong() && currentNote.isHit() && !currentNote.isMissed() &&
+                            System.currentTimeMillis() - currentNote.getCreationTime() >  delay + currentNote.getDuration() + hitWindow)
+                        {
+                            currentNote.miss();
+                            updateAccuracy();
+                        }
                         //to prevent key mashing from working, mark as missed if hit slightly before the hit window
                         else if(!currentNote.isMissed() && (long)keysPressed[j][1] - currentNote.getCreationTime() < delay - hitWindow &&
                             (long)keysPressed[j][1] - currentNote.getCreationTime() >= delay - hitWindow + 50)
