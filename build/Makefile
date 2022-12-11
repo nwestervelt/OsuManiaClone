@@ -1,4 +1,4 @@
-OsuManiaClone.jar: MainFrame.class HighwayPanel.class ScorePanel.class ../images/* ../song.wav
+OsuManiaClone.jar: MainFrame.class HighwayPanel.class ScorePanel.class ../images/* ../song.wav ../noteFile.txt
 	jar -cvfe OsuManiaClone.jar MainFrame *.class ../images ../song.wav ../noteFile.txt;
 
 MainFrame.class: ../MainFrame.java ../HighwayPanel.java ../ScorePanel.java

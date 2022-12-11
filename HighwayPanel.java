@@ -164,10 +164,11 @@ public class HighwayPanel extends JPanel
                             updateAccuracy();
 
                         }
-                        else if(currentNote.isLong() && currentNote.isHit() && !currentNote.isMissed() &&
+                        else if(currentNote.isLong() && currentNote.isHeld() && currentNote.isHit() && !currentNote.isMissed() &&
                             System.currentTimeMillis() - currentNote.getCreationTime() >  delay + currentNote.getDuration() + hitWindow)
                         {
                             currentNote.miss();
+                            currentNote.setHeld(false);
                             updateAccuracy();
                         }
                         //to prevent key mashing from working, mark as missed if hit slightly before the hit window
@@ -190,6 +191,7 @@ public class HighwayPanel extends JPanel
                             {
                                 //mark as hit and set release time to sentinel value to keep from triggering hit repeatedly
                                 currentNote.hit();
+                                currentNote.setHeld(false);
                                 keysPressed[j][1] = 0l;
                                 updateAccuracy();
                             }
